@@ -1,0 +1,60 @@
+diff -ur release24-maint/Makefile.pre.in release24-maint.new/Makefile.pre.in
+--- Makefile.pre.in	2009-10-03 14:24:49.000000000 +0200
++++ Makefile.pre.in	2009-11-26 15:00:21.953125000 +0100
+@@ -151,8 +151,8 @@
+ INSTSONAME=	@INSTSONAME@
+ 
+ 
+-LIBS=		@LIBS@
+-LIBM=		@LIBM@
++LIBS=		
++LIBM=		
+ LIBC=		@LIBC@
+ SYSLIBS=	$(LIBM) $(LIBC)
+ SHLIBS=		@SHLIBS@
+@@ -646,13 +646,13 @@
+ 		fi; \
+ 	done
+ 	$(INSTALL_PROGRAM) $(BUILDPYTHON) $(DESTDIR)$(BINDIR)/python$(VERSION)$(EXE)
+-	if test -f libpython$(VERSION)$(SO); then \
+-		if test "$(SO)" = .dll; then \
+-			$(INSTALL_SHARED) libpython$(VERSION)$(SO) $(DESTDIR)$(BINDIR); \
++	if test -f $(LDLIBRARY); then \
++		if test -n "$(DLLLIBRARY)" ; then \
++			$(INSTALL_SHARED) $(DLLLIBRARY) $(DESTDIR)$(BINDIR); \
+ 		else \
+-			$(INSTALL_SHARED) libpython$(VERSION)$(SO) $(DESTDIR)$(LIBDIR)/$(INSTSONAME); \
+-			if test libpython$(VERSION)$(SO) != $(INSTSONAME); then \
+-				(cd $(DESTDIR)$(LIBDIR); $(LN) -sf $(INSTSONAME) libpython$(VERSION)$(SO)); \
++			$(INSTALL_SHARED) $(LDLIBRARY) $(DESTDIR)$(LIBDIR)/$(INSTSONAME); \
++			if test $(LDLIBRARY) != $(INSTSONAME); then \
++				(cd $(DESTDIR)$(LIBDIR); $(LN) -sf $(INSTSONAME) $(LDLIBRARY)) \
+ 			fi \
+ 		fi; \
+ 	else	true; \
+diff -ur release24-maint/Python/ceval.c release24-maint.new/Python/ceval.c
+--- Python/ceval.c	2009-10-03 14:19:43.000000000 +0200
++++ Python/ceval.c	2009-11-26 12:40:16.562500000 +0100
+@@ -414,8 +414,8 @@
+ 
+ /* The interpreter's recursion limit */
+ 
+-static int recursion_limit = 1000;
+-int _Py_CheckRecursionLimit = 1000;
++static int recursion_limit = 2000;
++int _Py_CheckRecursionLimit = 2000;
+ 
+ int
+ Py_GetRecursionLimit(void)
+diff -ur release24-maint/configure release24-maint.new/configure
+--- configure	2009-10-03 14:24:49.000000000 +0200
++++ configure	2009-11-26 12:40:50.812500000 +0100
+@@ -3475,7 +3475,7 @@
+           ;;
+     CYGWIN*)
+           LDLIBRARY='libpython$(VERSION).dll.a'
+-          DLLLIBRARY='libpython$(VERSION).dll'
++          DLLLIBRARY='cygpython$(VERSION).dll'
+           ;;
+     SunOS*)
+ 	  LDLIBRARY='libpython$(VERSION).so'

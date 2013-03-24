@@ -1,0 +1,51 @@
+--- configure.orig	2007-04-05 21:32:57.000000000 -0700
++++ configure	2007-04-05 21:32:59.000000000 -0700
+@@ -3907,7 +3907,12 @@
+ 	    ;;
+ 	# is there any other compiler on Darwin besides gcc?
+ 	Darwin*)
+-	    BASECFLAGS="$BASECFLAGS -Wno-long-double -no-cpp-precomp -mno-fused-madd"
++	    if [[ `/usr/bin/arch` = 'ppc' ]]
++        then
++          BASECFLAGS="$BASECFLAGS  -no-cpp-precomp -mno-fused-madd -fno-common"
++        else
++          BASECFLAGS="$BASECFLAGS  -no-cpp-precomp -fno-common"
++        fi
+ 	    if test "${enable_universalsdk}"; then
+ 		BASECFLAGS="-arch ppc -arch i386 -isysroot ${UNIVERSALSDK} ${BASECFLAGS}"
+ 	    fi
+@@ -10328,7 +10333,7 @@
+         else
+             LIBTOOL_CRUFT=""
+     fi
+-    LIBTOOL_CRUFT=$LIBTOOL_CRUFT' -lSystem -lSystemStubs -arch_only ppc'
++    LIBTOOL_CRUFT=$LIBTOOL_CRUFT' -lSystem -lSystemStubs -arch_only '`/usr/bin/arch`
+     LIBTOOL_CRUFT=$LIBTOOL_CRUFT' -install_name $(PYTHONFRAMEWORKINSTALLDIR)/Versions/$(VERSION)/$(PYTHONFRAMEWORK)'
+     LIBTOOL_CRUFT=$LIBTOOL_CRUFT' -compatibility_version $(VERSION) -current_version $(VERSION)';;
+ esac
+diff -ur configure.in configure.in
+--- configure.in	2006-10-17 18:03:36.000000000 +0200
++++ configure.in	2009-10-02 22:31:01.000000000 +0200
+@@ -796,7 +796,12 @@
+ 	    ;;
+ 	# is there any other compiler on Darwin besides gcc?
+ 	Darwin*)
+-	    BASECFLAGS="$BASECFLAGS -Wno-long-double -no-cpp-precomp -mno-fused-madd"
++        if [[ `/usr/bin/arch` = 'ppc' ]]
++        then
++          BASECFLAGS="$BASECFLAGS -no-cpp-precomp -mno-fused-madd -fno-common"
++        else
++          BASECFLAGS="$BASECFLAGS -no-cpp-precomp -fno-common"
++        fi
+ 	    if test "${enable_universalsdk}"; then
+ 		BASECFLAGS="-arch ppc -arch i386 -isysroot ${UNIVERSALSDK} ${BASECFLAGS}"
+ 	    fi
+@@ -1315,7 +1320,7 @@
+         else
+             LIBTOOL_CRUFT=""
+     fi
+-    LIBTOOL_CRUFT=$LIBTOOL_CRUFT' -lSystem -lSystemStubs -arch_only ppc'
++    LIBTOOL_CRUFT=$LIBTOOL_CRUFT' -lSystem -lSystemStubs -arch_only '`/usr/bin/arch`
+     LIBTOOL_CRUFT=$LIBTOOL_CRUFT' -install_name $(PYTHONFRAMEWORKINSTALLDIR)/Versions/$(VERSION)/$(PYTHONFRAMEWORK)'
+     LIBTOOL_CRUFT=$LIBTOOL_CRUFT' -compatibility_version $(VERSION) -current_version $(VERSION)';;
+ esac

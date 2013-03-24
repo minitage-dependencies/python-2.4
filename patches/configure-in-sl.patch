@@ -1,0 +1,53 @@
+diff -ru a/configure.in b/configure.in
+--- configure.in	2009-10-03 02:10:50.000000000 +0200
++++ configure.in	2009-10-03 02:14:11.000000000 +0200
+@@ -1325,7 +1325,48 @@
+         else
+             LIBTOOL_CRUFT=""
+     fi
+-    LIBTOOL_CRUFT=$LIBTOOL_CRUFT' -lSystem -lSystemStubs -arch_only '`/usr/bin/arch`
++    AC_TRY_RUN([
++    #include <unistd.h>
++    int main(int argc, char*argv[])
++    {
++      if (sizeof(long) == 4) {
++         return 0;
++      } else {
++         return 1;
++      }
++    }
++    ], ac_osx_32bit=yes,
++       ac_osx_32bit=no,
++       ac_osx_32bit=no)
++    
++    if test "${ac_osx_32bit}" = "yes"; then
++       case `arch` in
++       i386) 
++           DEFAULT_ARCH="i386" 
++           ;;
++       ppc) 
++           DEFAULT_ARCH="ppc" 
++           ;;
++       *)
++           AC_MSG_ERROR([Unexpected output of 'arch' on OSX])
++           ;;
++       esac
++    else
++       case `arch` in
++       i386) 
++           DEFAULT_ARCH="x86_64" 
++           ;;
++       ppc) 
++           DEFAULT_ARCH="ppc64" 
++           ;;
++       *)
++           AC_MSG_ERROR([Unexpected output of 'arch' on OSX])
++           ;;
++       esac
++    fi
++
++    LIBTOOL_CRUFT=$LIBTOOL_CRUFT" -lSystem -lSystemStubs -arch_only ${DEFAULT_ARCH}"
++
+     LIBTOOL_CRUFT=$LIBTOOL_CRUFT' -install_name $(PYTHONFRAMEWORKINSTALLDIR)/Versions/$(VERSION)/$(PYTHONFRAMEWORK)'
+     LIBTOOL_CRUFT=$LIBTOOL_CRUFT' -compatibility_version $(VERSION) -current_version $(VERSION)';;
+ esac

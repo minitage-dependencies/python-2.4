@@ -1,0 +1,337 @@
+Index: setup.py
+===================================================================
+--- setup.py	(revision 75208)
++++ setup.py	(working copy)
+@@ -439,7 +439,7 @@
+             exts.append( Extension('rgbimg', ['rgbimgmodule.c']) )
+ 
+         # readline
+-        if self.compiler.find_library_file(lib_dirs, 'readline'):
++        if True: # minitage comes with that self.compiler.find_library_file(lib_dirs, 'readline'):
+             readline_libs = ['readline']
+             if self.compiler.find_library_file(lib_dirs,
+                                                  'ncursesw'):
+@@ -468,7 +468,8 @@
+                                    library_dirs=['/usr/lib/termcap'],
+                                    extra_link_args=readline_extra_link_args,
+                                    libraries=readline_libs) )
+-        if platform not in ['mac']:
++        # allow to have crypt on mac
++        if platform not in ['that compiles with minitage']:
+             # crypt module.
+ 
+             if self.compiler.find_library_file(lib_dirs, 'crypt'):
+@@ -499,11 +500,13 @@
+                                       '/usr/contrib/ssl/lib/'
+                                      ] )
+ 
+-        if (ssl_incs is not None and
+-            ssl_libs is not None):
++        # minitage has that.
++        if True:#(ssl_incs is not None and
++            #ssl_libs is not None):
+             exts.append( Extension('_ssl', ['_ssl.c'],
+-                                   include_dirs = ssl_incs,
+-                                   library_dirs = ssl_libs,
++                                   # they are already in compilation flags when building with minitage
++                                   #include_dirs = ssl_incs,
++                                   #library_dirs = ssl_libs,
+                                    libraries = ['ssl', 'crypto'],
+                                    depends = ['socketmodule.h']), )
+ 
+@@ -663,22 +666,22 @@
+         # underlying db library.  May BSD-ish Unixes incorporate db 1.85
+         # symbols into libc and place the include file in /usr/include.
+         f = "/usr/include/db.h"
+-        if os.path.exists(f):
+-            data = open(f).read()
+-            m = re.search(r"#s*define\s+HASHVERSION\s+2\s*", data)
+-            if m is not None:
+-                # bingo - old version used hash file format version 2
+-                ### XXX this should be fixed to not be platform-dependent
+-                ### but I don't have direct access to an osf1 platform and
+-                ### seemed to be muffing the search somehow
+-                libraries = platform == "osf1" and ['db'] or None
+-                if libraries is not None:
+-                    exts.append(Extension('bsddb185', ['bsddbmodule.c'],
+-                                          libraries=libraries))
+-                else:
+-                    exts.append(Extension('bsddb185', ['bsddbmodule.c']))
++        #if os.path.exists(f):
++        #    data = open(f).read()
++        #    m = re.search(r"#s*define\s+HASHVERSION\s+2\s*", data)
++        #    if m is not None:
++        #        # bingo - old version used hash file format version 2
++        #        ### XXX this should be fixed to not be platform-dependent
++        #        ### but I don't have direct access to an osf1 platform and
++        #        ### seemed to be muffing the search somehow
++        #        libraries = platform == "osf1" and ['db'] or None
++        #        if libraries is not None:
++        #            exts.append(Extension('bsddb185', ['bsddbmodule.c'],
++        #                                  libraries=libraries))
++        #        else:
++        #            exts.append(Extension('bsddb185', ['bsddbmodule.c']))
+ 
+-        # The standard Unix dbm module:
++        ## The standard Unix dbm module:
+         if platform not in ['cygwin']:
+             if find_file("ndbm.h", inc_dirs, []) is not None:
+                 # Some systems have -lndbm, others don't
+@@ -709,7 +712,8 @@
+                                    libraries = ['gdbm'] ) )
+ 
+         # Unix-only modules
+-        if platform not in ['mac', 'win32']:
++        # minitage wants this
++        if True:#platform not in ['mac', 'win32']:
+             # Steen Lumholt's termios module
+             exts.append( Extension('termios', ['termios.c']) )
+             # Jeremy Hylton's rlimit interface
+@@ -727,20 +731,21 @@
+ 
+         # Curses support, requiring the System V version of curses, often
+         # provided by the ncurses library.
++        # force case for minitage
+         panel_library = 'panel'
+-        if (self.compiler.find_library_file(lib_dirs, 'ncursesw')):
++        if False:#(self.compiler.find_library_file(lib_dirs, 'ncursesw')):
+             curses_libs = ['ncursesw']
+             # Bug 1464056: If _curses.so links with ncursesw,
+             # _curses_panel.so must link with panelw.
+             panel_library = 'panelw'
+             exts.append( Extension('_curses', ['_cursesmodule.c'],
+                                    libraries = curses_libs) )
+-        elif (self.compiler.find_library_file(lib_dirs, 'ncurses')):
++        elif False:#(self.compiler.find_library_file(lib_dirs, 'ncurses')):
+             curses_libs = ['ncurses']
+             exts.append( Extension('_curses', ['_cursesmodule.c'],
+                                    libraries = curses_libs) )
+-        elif (self.compiler.find_library_file(lib_dirs, 'curses')
+-              and platform != 'darwin'):
++        elif True:#(self.compiler.find_library_file(lib_dirs, 'curses')
++              #and platform != 'darwin'):
+                 # OSX has an old Berkeley curses, not good enough for
+                 # the _curses module.
+             if (self.compiler.find_library_file(lib_dirs, 'terminfo')):
+@@ -754,8 +759,8 @@
+                                    libraries = curses_libs) )
+ 
+         # If the curses module is enabled, check for the panel module
+-        if (module_enabled(exts, '_curses') and
+-            self.compiler.find_library_file(lib_dirs, panel_library)):
++        if (module_enabled(exts, '_curses')): # always true on minitage and
++            #self.compiler.find_library_file(lib_dirs, panel_library)):
+             exts.append( Extension('_curses_panel', ['_curses_panel.c'],
+                                    libraries = [panel_library] + curses_libs) )
+ 
+@@ -773,25 +778,27 @@
+         # You can upgrade zlib to version 1.1.4 yourself by going to
+         # http://www.gzip.org/zlib/
+         zlib_inc = find_file('zlib.h', [], inc_dirs)
+-        if zlib_inc is not None:
+-            zlib_h = zlib_inc[0] + '/zlib.h'
+-            version = '"0.0.0"'
+-            version_req = '"1.1.3"'
+-            fp = open(zlib_h)
+-            while 1:
+-                line = fp.readline()
+-                if not line:
+-                    break
+-                if line.startswith('#define ZLIB_VERSION'):
+-                    version = line.split()[2]
+-                    break
+-            if version >= version_req:
+-                if (self.compiler.find_library_file(lib_dirs, 'z')):
++        # true in minitage
++        if True:#zlib_inc is not None:
++            #zlib_h = zlib_inc[0] + '/zlib.h'
++            #version = '"0.0.0"'
++            #version_req = '"1.1.3"'
++            #fp = open(zlib_h)
++            #while 1:
++            #    line = fp.readline()
++            #    if not line:
++            #        break
++            #    if line.startswith('#define ZLIB_VERSION'):
++            #        version = line.split()[2]
++            #        break
++            if True:#version >= version_req:
++                if True:#(self.compiler.find_library_file(lib_dirs, 'z')):
+                     exts.append( Extension('zlib', ['zlibmodule.c'],
+                                            libraries = ['z']) )
+ 
+         # Gustavo Niemeyer's bz2 module.
+-        if (self.compiler.find_library_file(lib_dirs, 'bz2')):
++        # true in minitage
++        if True:#(self.compiler.find_library_file(lib_dirs, 'bz2')):
+             exts.append( Extension('bz2', ['bz2module.c'],
+                                    libraries = ['bz2']) )
+ 
+@@ -812,7 +819,10 @@
+             ]
+         exts.append(Extension('pyexpat',
+                               define_macros = define_macros,
+-                              include_dirs = [expatinc],
++                              # defined by minitage
++                              # include_dirs = [expatinc],
++                              # force link against minitage expat
++                              libraries = ['expat'],
+                               sources = ['pyexpat.c',
+                                          'expat/xmlparse.c',
+                                          'expat/xmlrole.c',
+@@ -850,13 +860,13 @@
+         if platform == 'darwin' and ("--disable-toolbox-glue" not in
+             sysconfig.get_config_var("CONFIG_ARGS")):
+             # Mac OS X specific modules.
+-            exts.append( Extension('_CF', ['cf/_CFmodule.c', 'cf/pycfbridge.c'],
+-                        extra_link_args=['-framework', 'CoreFoundation']) )
++            #exts.append( Extension('_CF', ['cf/_CFmodule.c', 'cf/pycfbridge.c'],
++            #            extra_link_args=['-framework', 'CoreFoundation']) )
+ 
+-            exts.append( Extension('ColorPicker', ['ColorPickermodule.c'],
+-                        extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('autoGIL', ['autoGIL.c'],
+-                        extra_link_args=['-framework', 'CoreFoundation']) )
++            #exts.append( Extension('ColorPicker', ['ColorPickermodule.c'],
++            #            extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('autoGIL', ['autoGIL.c'],
++            #            extra_link_args=['-framework', 'CoreFoundation']) )
+             exts.append( Extension('gestalt', ['gestaltmodule.c'],
+                         extra_link_args=['-framework', 'Carbon']) )
+             exts.append( Extension('MacOS', ['macosmodule.c'],
+@@ -865,65 +875,65 @@
+                         extra_link_args=['-framework', 'Carbon']) )
+             exts.append( Extension('icglue', ['icgluemodule.c'],
+                         extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Res', ['res/_Resmodule.c'],
+-                        extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Snd', ['snd/_Sndmodule.c'],
+-                        extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('Nav', ['Nav.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_AE', ['ae/_AEmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_AH', ['ah/_AHmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_App', ['app/_Appmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_CarbonEvt', ['carbonevt/_CarbonEvtmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_CG', ['cg/_CGmodule.c'],
+-                    extra_link_args=['-framework', 'ApplicationServices']) )
+-            exts.append( Extension('_Cm', ['cm/_Cmmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Ctl', ['ctl/_Ctlmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Dlg', ['dlg/_Dlgmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Drag', ['drag/_Dragmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Evt', ['evt/_Evtmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_File', ['file/_Filemodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Folder', ['folder/_Foldermodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Fm', ['fm/_Fmmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Help', ['help/_Helpmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Icn', ['icn/_Icnmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_IBCarbon', ['ibcarbon/_IBCarbon.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Launch', ['launch/_Launchmodule.c'],
+-                    extra_link_args=['-framework', 'ApplicationServices']) )
+-            exts.append( Extension('_List', ['list/_Listmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Menu', ['menu/_Menumodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Mlte', ['mlte/_Mltemodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_OSA', ['osa/_OSAmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Qd', ['qd/_Qdmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Qdoffs', ['qdoffs/_Qdoffsmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_Qt', ['qt/_Qtmodule.c'],
+-                    extra_link_args=['-framework', 'QuickTime',
+-                                     '-framework', 'Carbon']) )
+-            exts.append( Extension('_Scrap', ['scrap/_Scrapmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
+-            exts.append( Extension('_TE', ['te/_TEmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Res', ['res/_Resmodule.c'],
++            #            extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Snd', ['snd/_Sndmodule.c'],
++            #            extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('Nav', ['Nav.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_AE', ['ae/_AEmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_AH', ['ah/_AHmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_App', ['app/_Appmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_CarbonEvt', ['carbonevt/_CarbonEvtmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_CG', ['cg/_CGmodule.c'],
++            #        extra_link_args=['-framework', 'ApplicationServices']) )
++            #exts.append( Extension('_Cm', ['cm/_Cmmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Ctl', ['ctl/_Ctlmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Dlg', ['dlg/_Dlgmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Drag', ['drag/_Dragmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Evt', ['evt/_Evtmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_File', ['file/_Filemodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Folder', ['folder/_Foldermodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Fm', ['fm/_Fmmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Help', ['help/_Helpmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Icn', ['icn/_Icnmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_IBCarbon', ['ibcarbon/_IBCarbon.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Launch', ['launch/_Launchmodule.c'],
++            #        extra_link_args=['-framework', 'ApplicationServices']) )
++            #exts.append( Extension('_List', ['list/_Listmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Menu', ['menu/_Menumodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Mlte', ['mlte/_Mltemodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_OSA', ['osa/_OSAmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Qd', ['qd/_Qdmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Qdoffs', ['qdoffs/_Qdoffsmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Qt', ['qt/_Qtmodule.c'],
++            #        extra_link_args=['-framework', 'QuickTime',
++            #                         '-framework', 'Carbon']) )
++            #exts.append( Extension('_Scrap', ['scrap/_Scrapmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_TE', ['te/_TEmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
+             # As there is no standardized place (yet) to put
+             # user-installed Mac libraries on OSX, we search for "waste"
+             # in parent directories of the Python source tree. You
+@@ -948,8 +958,8 @@
+                                libraries = ['WASTE'],
+                                extra_link_args = ['-framework', 'Carbon'],
+                 ) )
+-            exts.append( Extension('_Win', ['win/_Winmodule.c'],
+-                    extra_link_args=['-framework', 'Carbon']) )
++            #exts.append( Extension('_Win', ['win/_Winmodule.c'],
++            #        extra_link_args=['-framework', 'Carbon']) )
+ 
+         self.extensions.extend(exts)
+ 

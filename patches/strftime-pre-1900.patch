@@ -1,0 +1,153 @@
+Index: Lib/test/test_datetime.py
+===================================================================
+--- Lib/test/test_datetime.py	(révision 75208)
++++ Lib/test/test_datetime.py	(copie de travail)
+@@ -843,6 +843,7 @@
+     def test_strftime(self):
+         t = self.theclass(2005, 3, 2)
+         self.assertEqual(t.strftime("m:%m d:%d y:%y"), "m:03 d:02 y:05")
++        self.assertEqual(t.strftime("Y:%Y"), "Y:2005")
+         self.assertEqual(t.strftime(""), "") # SF bug #761337
+         self.assertEqual(t.strftime('x'*1000), 'x'*1000) # SF bug #1556784
+ 
+@@ -859,6 +860,35 @@
+         self.assert_(isinstance(self.theclass.resolution, timedelta))
+         self.assert_(self.theclass.max > self.theclass.min)
+ 
++    def test_strftime_early(self):
++        t = self.theclass(1805, 3, 2)
++        self.assertEqual(t.strftime("m:%m d:%d y:%y"), "m:03 d:02 y:05")
++        self.assertEqual(t.strftime("Y:%Y"), "Y:1805")
++        self.assertEqual(t.strftime(""), "") # SF bug #761337
++        self.assertEqual(t.strftime('x'*1000), 'x'*1000) # SF bug #1556784
++
++        self.assertRaises(TypeError, t.strftime) # needs an arg
++        self.assertRaises(TypeError, t.strftime, "one", "two") # too many args
++        self.assertRaises(TypeError, t.strftime, 42) # arg wrong type
++
++        # A naive object replaces %z and %Z w/ empty strings.
++        self.assertEqual(t.strftime("'%z' '%Z'"), "'' ''")
++
++    def test_strftime_very_early(self):
++        t = self.theclass(85, 3, 2)
++        self.assertEqual(t.strftime("m:%m d:%d y:%y"), "m:03 d:02 y:85")
++        self.assertEqual(t.strftime("Y:%Y"), "Y:85")
++        self.assertEqual(t.strftime(""), "") # SF bug #761337
++        self.assertEqual(t.strftime('x'*1000), 'x'*1000) # SF bug #1556784
++
++        self.assertRaises(TypeError, t.strftime) # needs an arg
++        self.assertRaises(TypeError, t.strftime, "one", "two") # too many args
++        self.assertRaises(TypeError, t.strftime, 42) # arg wrong type
++
++        # A naive object replaces %z and %Z w/ empty strings.
++        self.assertEqual(t.strftime("'%z' '%Z'"), "'' ''")
++
++
+     def test_extreme_timedelta(self):
+         big = self.theclass.max - self.theclass.min
+         # 3652058 days, 23 hours, 59 minutes, 59 seconds, 999999 microseconds
+@@ -989,11 +1019,11 @@
+         self.failUnless(self.theclass.max)
+ 
+     def test_srftime_out_of_range(self):
+-        # For nasty technical reasons, we can't handle years before 1900.
++        # For nasty technical reasons, we couldn't handle years before 1900. Now we can.
+         cls = self.theclass
+         self.assertEqual(cls(1900, 1, 1).strftime("%Y"), "1900")
+         for y in 1, 49, 51, 99, 100, 1000, 1899:
+-            self.assertRaises(ValueError, cls(y, 1, 1).strftime, "%Y")
++            self.assertEqual(cls(y, 1, 1).strftime("%Y"), str(y))
+ 
+     def test_replace(self):
+         cls = self.theclass
+Index: Modules/datetimemodule.c
+===================================================================
+--- Modules/datetimemodule.c	(révision 75208)
++++ Modules/datetimemodule.c	(copie de travail)
+@@ -1130,6 +1130,32 @@
+ 	return 0;
+ }
+ 
++/* copied straight out of timemodule.c */
++static int
++gettmarg(PyObject *args, struct tm *p)
++{
++       int y;
++       memset((void *) p, '\0', sizeof(struct tm));
++
++       if (!PyArg_Parse(args, "(iiiiiiiii)",
++                        &y,
++                        &p->tm_mon,
++                        &p->tm_mday,
++                        &p->tm_hour,
++                        &p->tm_min,
++                        &p->tm_sec,
++                        &p->tm_wday,
++                        &p->tm_yday,
++                        &p->tm_isdst))
++               return 0;
++       p->tm_year = y - 1900;
++       p->tm_mon--;
++       p->tm_wday = (p->tm_wday + 1) % 7;
++       p->tm_yday--;
++       return 1;
++}
++
++
+ /* I sure don't want to reproduce the strftime code from the time module,
+  * so this imports the module and calls it.  All the hair is due to
+  * giving special meanings to the %z and %Z format codes via a preprocessing
+@@ -1170,7 +1196,8 @@
+ 	 * wrapper and calling the C strftime() directly, but that isn't
+ 	 * an option in the Python implementation of this module.
+ 	 */
+-	{
++	/*
++        {
+ 		long year;
+ 		PyObject *pyyear = PySequence_GetItem(timetuple, 0);
+ 		if (pyyear == NULL) return NULL;
+@@ -1185,6 +1212,7 @@
+ 	                return NULL;
+ 		}
+ 	}
++        */
+ 
+ 	/* Scan the input format, looking for %z and %Z escapes, building
+ 	 * a new format.  Since computing the replacements for those codes
+@@ -1310,12 +1338,29 @@
+ 	if (_PyString_Resize(&newfmt, usednew) < 0)
+ 		goto Done;
+ 	{
+-		PyObject *time = PyImport_ImportModule("time");
+-		if (time == NULL)
+-			goto Done;
+-		result = PyObject_CallMethod(time, "strftime", "OO",
+-					     newfmt, timetuple);
+-		Py_DECREF(time);
++
++                struct tm buf;
++                char *outbuf = 0;
++                char *c_newfmt = PyString_AsString(newfmt);
++                size_t i;
++                int buflen;
++                int fmtlen;
++                memset((void *)(&buf), '\0', sizeof(struct tm));
++                gettmarg(timetuple, &buf);
++                fmtlen = strlen(c_newfmt);
++                for (i = 1024; ; i += i) {
++                        outbuf = (char *)malloc(i);
++                        if (outbuf == NULL) {
++                                return PyErr_NoMemory();
++                        }
++                        buflen = strftime(outbuf, 1024, c_newfmt, &buf);
++                        if (buflen > 0 || i >= 256 * fmtlen) {
++                                result = PyString_FromStringAndSize(outbuf, buflen);
++                                free(outbuf);
++                                break;
++                        }
++                }
++
+     	}
+  Done:
+ 	Py_XDECREF(zreplacement);

@@ -1,0 +1,15 @@
+*.pyc
+.download
+.installed.cfg
+bin
+parts
+
+test_datetime.py
+release24-maint
+release24-maint*
+.minitage
+sys/
+__minitage__part__tmp/
+*.pyc
+.installed.cfg
+*.pyc

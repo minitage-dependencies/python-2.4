@@ -1,0 +1,218 @@
+--- setup.py.orig	2008-03-15 18:07:20.000000000 +0100
++++ setup.py	2008-03-15 18:08:58.000000000 +0100
+@@ -1011,112 +1011,113 @@
+ 
+ 
+     def detect_tkinter(self, inc_dirs, lib_dirs):
+-        # The _tkinter module.
+-
+-        # Rather than complicate the code below, detecting and building
+-        # AquaTk is a separate method. Only one Tkinter will be built on
+-        # Darwin - either AquaTk, if it is found, or X11 based Tk.
+-        platform = self.get_platform()
+-        if platform == 'darwin' and \
+-           self.detect_tkinter_darwin(inc_dirs, lib_dirs):
+-            return
+-
+-        # Assume we haven't found any of the libraries or include files
+-        # The versions with dots are used on Unix, and the versions without
+-        # dots on Windows, for detection by cygwin.
+-        tcllib = tklib = tcl_includes = tk_includes = None
+-        for version in ['8.5', '85', '8.4', '84', '8.3', '83', '8.2',
+-                        '82', '8.1', '81', '8.0', '80']:
+-            tklib = self.compiler.find_library_file(lib_dirs, 'tk' + version)
+-            tcllib = self.compiler.find_library_file(lib_dirs, 'tcl' + version)
+-            if tklib and tcllib:
+-                # Exit the loop when we've found the Tcl/Tk libraries
+-                break
+-
+-        # Now check for the header files
+-        if tklib and tcllib:
+-            # Check for the include files on Debian and {Free,Open}BSD, where
+-            # they're put in /usr/include/{tcl,tk}X.Y
+-            dotversion = version
+-            if '.' not in dotversion and "bsd" in sys.platform.lower():
+-                # OpenBSD and FreeBSD use Tcl/Tk library names like libtcl83.a,
+-                # but the include subdirs are named like .../include/tcl8.3.
+-                dotversion = dotversion[:-1] + '.' + dotversion[-1]
+-            tcl_include_sub = []
+-            tk_include_sub = []
+-            for dir in inc_dirs:
+-                tcl_include_sub += [dir + os.sep + "tcl" + dotversion]
+-                tk_include_sub += [dir + os.sep + "tk" + dotversion]
+-            tk_include_sub += tcl_include_sub
+-            tcl_includes = find_file('tcl.h', inc_dirs, tcl_include_sub)
+-            tk_includes = find_file('tk.h', inc_dirs, tk_include_sub)
+-
+-        if (tcllib is None or tklib is None or
+-            tcl_includes is None or tk_includes is None):
+-            self.announce("INFO: Can't locate Tcl/Tk libs and/or headers", 2)
+-            return
+-
+-        # OK... everything seems to be present for Tcl/Tk.
+-
+-        include_dirs = [] ; libs = [] ; defs = [] ; added_lib_dirs = []
+-        for dir in tcl_includes + tk_includes:
+-            if dir not in include_dirs:
+-                include_dirs.append(dir)
+-
+-        # Check for various platform-specific directories
+-        if platform == 'sunos5':
+-            include_dirs.append('/usr/openwin/include')
+-            added_lib_dirs.append('/usr/openwin/lib')
+-        elif os.path.exists('/usr/X11R6/include'):
+-            include_dirs.append('/usr/X11R6/include')
+-            added_lib_dirs.append('/usr/X11R6/lib64')
+-            added_lib_dirs.append('/usr/X11R6/lib')
+-        elif os.path.exists('/usr/X11R5/include'):
+-            include_dirs.append('/usr/X11R5/include')
+-            added_lib_dirs.append('/usr/X11R5/lib')
+-        else:
+-            # Assume default location for X11
+-            include_dirs.append('/usr/X11/include')
+-            added_lib_dirs.append('/usr/X11/lib')
+-
+-        # If Cygwin, then verify that X is installed before proceeding
+-        if platform == 'cygwin':
+-            x11_inc = find_file('X11/Xlib.h', [], include_dirs)
+-            if x11_inc is None:
+-                return
+-
+-        # Check for BLT extension
+-        if self.compiler.find_library_file(lib_dirs + added_lib_dirs,
+-                                           'BLT8.0'):
+-            defs.append( ('WITH_BLT', 1) )
+-            libs.append('BLT8.0')
+-        elif self.compiler.find_library_file(lib_dirs + added_lib_dirs,
+-                                           'BLT'):
+-            defs.append( ('WITH_BLT', 1) )
+-            libs.append('BLT')
+-
+-        # Add the Tcl/Tk libraries
+-        libs.append('tk'+ version)
+-        libs.append('tcl'+ version)
+-
+-        if platform in ['aix3', 'aix4']:
+-            libs.append('ld')
+-
+-        # Finally, link with the X11 libraries (not appropriate on cygwin)
+-        if platform != "cygwin":
+-            libs.append('X11')
+-
+-        ext = Extension('_tkinter', ['_tkinter.c', 'tkappinit.c'],
+-                        define_macros=[('WITH_APPINIT', 1)] + defs,
+-                        include_dirs = include_dirs,
+-                        libraries = libs,
+-                        library_dirs = added_lib_dirs,
+-                        )
+-        self.extensions.append(ext)
++#        # The _tkinter module.
++#
++#        # Rather than complicate the code below, detecting and building
++#        # AquaTk is a separate method. Only one Tkinter will be built on
++#        # Darwin - either AquaTk, if it is found, or X11 based Tk.
++#        platform = self.get_platform()
++#        if platform == 'darwin' and \
++#           self.detect_tkinter_darwin(inc_dirs, lib_dirs):
++#            return
++#
++#        # Assume we haven't found any of the libraries or include files
++#        # The versions with dots are used on Unix, and the versions without
++#        # dots on Windows, for detection by cygwin.
++#        tcllib = tklib = tcl_includes = tk_includes = None
++#        for version in ['8.5', '85', '8.4', '84', '8.3', '83', '8.2',
++#                        '82', '8.1', '81', '8.0', '80']:
++#            tklib = self.compiler.find_library_file(lib_dirs, 'tk' + version)
++#            tcllib = self.compiler.find_library_file(lib_dirs, 'tcl' + version)
++#            if tklib and tcllib:
++#                # Exit the loop when we've found the Tcl/Tk libraries
++#                break
++#
++#        # Now check for the header files
++#        if tklib and tcllib:
++#            # Check for the include files on Debian and {Free,Open}BSD, where
++#            # they're put in /usr/include/{tcl,tk}X.Y
++#            dotversion = version
++#            if '.' not in dotversion and "bsd" in sys.platform.lower():
++#                # OpenBSD and FreeBSD use Tcl/Tk library names like libtcl83.a,
++#                # but the include subdirs are named like .../include/tcl8.3.
++#                dotversion = dotversion[:-1] + '.' + dotversion[-1]
++#            tcl_include_sub = []
++#            tk_include_sub = []
++#            for dir in inc_dirs:
++#                tcl_include_sub += [dir + os.sep + "tcl" + dotversion]
++#                tk_include_sub += [dir + os.sep + "tk" + dotversion]
++#            tk_include_sub += tcl_include_sub
++#            tcl_includes = find_file('tcl.h', inc_dirs, tcl_include_sub)
++#            tk_includes = find_file('tk.h', inc_dirs, tk_include_sub)
++#
++#        if (tcllib is None or tklib is None or
++#            tcl_includes is None or tk_includes is None):
++#            self.announce("INFO: Can't locate Tcl/Tk libs and/or headers", 2)
++#            return
++#
++#        # OK... everything seems to be present for Tcl/Tk.
++#
++#        include_dirs = [] ; libs = [] ; defs = [] ; added_lib_dirs = []
++#        for dir in tcl_includes + tk_includes:
++#            if dir not in include_dirs:
++#                include_dirs.append(dir)
++#
++#        # Check for various platform-specific directories
++#        if platform == 'sunos5':
++#            include_dirs.append('/usr/openwin/include')
++#            added_lib_dirs.append('/usr/openwin/lib')
++#        elif os.path.exists('/usr/X11R6/include'):
++#            include_dirs.append('/usr/X11R6/include')
++#            added_lib_dirs.append('/usr/X11R6/lib64')
++#            added_lib_dirs.append('/usr/X11R6/lib')
++#        elif os.path.exists('/usr/X11R5/include'):
++#            include_dirs.append('/usr/X11R5/include')
++#            added_lib_dirs.append('/usr/X11R5/lib')
++#        else:
++#            # Assume default location for X11
++#            include_dirs.append('/usr/X11/include')
++#            added_lib_dirs.append('/usr/X11/lib')
++#
++#        # If Cygwin, then verify that X is installed before proceeding
++#        if platform == 'cygwin':
++#            x11_inc = find_file('X11/Xlib.h', [], include_dirs)
++#            if x11_inc is None:
++#                return
++#
++#        # Check for BLT extension
++#        if self.compiler.find_library_file(lib_dirs + added_lib_dirs,
++#                                           'BLT8.0'):
++#            defs.append( ('WITH_BLT', 1) )
++#            libs.append('BLT8.0')
++#        elif self.compiler.find_library_file(lib_dirs + added_lib_dirs,
++#                                           'BLT'):
++#            defs.append( ('WITH_BLT', 1) )
++#            libs.append('BLT')
++#
++#        # Add the Tcl/Tk libraries
++#        libs.append('tk'+ version)
++#        libs.append('tcl'+ version)
++#
++#        if platform in ['aix3', 'aix4']:
++#            libs.append('ld')
++#
++#        # Finally, link with the X11 libraries (not appropriate on cygwin)
++#        if platform != "cygwin":
++#            libs.append('X11')
++#
++#        ext = Extension('_tkinter', ['_tkinter.c', 'tkappinit.c'],
++#                        define_macros=[('WITH_APPINIT', 1)] + defs,
++#                        include_dirs = include_dirs,
++#                        libraries = libs,
++#                        library_dirs = added_lib_dirs,
++#                        )
++#        #self.extensions.append(ext)
+ 
+ ##         # Uncomment these lines if you want to play with xxmodule.c
+ ##         ext = Extension('xx', ['xxmodule.c'])
+ ##         self.extensions.append(ext)
++        pass
+ 
+         # XXX handle these, but how to detect?
+         # *** Uncomment and edit for PIL (TkImaging) extension only:

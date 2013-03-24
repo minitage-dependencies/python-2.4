@@ -1,0 +1,22 @@
+diff -ur release24-maint/setup.py release24-maint.modules/setup.py
+--- setup.py	2009-10-03 14:24:49.000000000 +0200
++++ setup.py	2009-11-24 12:37:40.265625000 +0100
+@@ -243,6 +243,18 @@
+         add_dir_to_list(self.compiler.library_dirs, '/usr/local/lib')
+         add_dir_to_list(self.compiler.include_dirs, '/usr/local/include')
+ 
++        # ld_run_path is set by the minitage compilation recipe !
++        if self.get_platform() == 'cygwin':
++            minitage_inc_dirs, minitage_lib_dirs = [], []
++            noecho = [(minitage_inc_dirs.append('%s/include'%'/lib'.join('/a/b/c/lib/a/lib'.split('/lib')[:-1])),
++                       minitage_lib_dirs.append('%s/lib'    %'/lib'.join('/a/b/c/lib/a/lib'.split('/lib')[:-1])),
++                       minitage_lib_dirs.append('%s/bin'    %'/lib'.join('/a/b/c/lib/a/lib'.split('/lib')[:-1])),)
++                      for a in os.environ['LD_RUN_PATH'].split(':')
++                      if ('dependencies' in a and (a.endswith('/lib')))]
++            noecho = [add_dir_to_list(self.compiler.include_dirs, a) for a in minitage_inc_dirs]
++            noecho = [add_dir_to_list(self.compiler.library_dirs, a) for a in minitage_lib_dirs]
++
++        
+         # Add paths to popular package managers on OS X/darwin
+         if sys.platform == "darwin":
+             # Fink installs into /sw by default
